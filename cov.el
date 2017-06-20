@@ -351,10 +351,42 @@ execution frequency"
     'cov-light-face)
    (t 'cov-none-face)))
 
+(defun cov-left-fringe (times-executed percentage)
+  "Return before-string fragment that set the left fringe for PERCENTAGE.
+TIMES-EXECUTED is ignored."
+  (ignore times-executed)
+  (propertize "f" 'display `(left-fringe ,cov-fringe-symbol ,(cov--get-face percentage))))
+
+(defun cov-right-fringe (times-executed percentage)
+  "Return before-string fragment that set the right fringe for PERCENTAGE.
+TIMES-EXECUTED is ignored."
+  (ignore times-executed)
+  (propertize "rf" 'display
+			  `(right-fringe ,cov-fringe-symbol ,(cov--get-face percentage))))
+
+(defcustom cov-before-string-functions
+  '(cov-left-fringe)
+  "List of functions that return before-string fragments.
+Each function must accept two argumtents (TIMES-EXECUTED
+PERCENTAGE).  The returned strings are concatenated and used as
+the before string an an overlay for a line with the corresponding
+TIMES-EXECUTED and PERCENTAGE."
+  :tag "Fragment functions"
+  :options   '(cov-left-fringe
+	cov-right-fringe)
+  :group 'cov
+  :type '(repeat function)
+  )
+
 (defun cov--get-before-string (times-executed percentage)
   "Use TIMES-EXECUTED and PERCENTAGE to create a before-string.
 The before-string can have any display properties for fringes and margins."
-  (propertize "f" 'display `(left-fringe ,cov-fringe-symbol ,(cov--get-face percentage))))
+  (concat (propertize "f" 'display
+					  `(left-fringe ,cov-fringe-symbol ,(cov--get-face percentage)))
+		  (propertize "rf" 'display
+					  `(right-fringe ,cov-fringe-symbol ,(cov--get-face percentage)))
+		  (propertize "m" 'display
+					  `((margin right-margin) ,(number-to-string times-executed)))))
 
 (defun cov--help (n percentage)
   "Return help text for the given N count and PERCENTAGE."
