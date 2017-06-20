@@ -351,8 +351,9 @@ execution frequency"
     'cov-light-face)
    (t 'cov-none-face)))
 
-(defun cov--get-fringe (percentage)
-  "Return the fringe with the correct face for PERCENTAGE."
+(defun cov--get-before-string (times-executed percentage)
+  "Use TIMES-EXECUTED and PERCENTAGE to create a before-string.
+The before-string can have any display properties for fringes and margins."
   (propertize "f" 'display `(left-fringe ,cov-fringe-symbol ,(cov--get-face percentage))))
 
 (defun cov--help (n percentage)
