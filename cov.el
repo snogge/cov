@@ -140,7 +140,7 @@ COVERAGE-TOOL has created the data.
 
 Currently the only supported COVERAGE-TOOL is gcov.")
 
-(defvar cov-coverage-file-paths '("." cov--locate-coveralls cov--locate-clover)
+(defvar cov-coverage-file-paths '("." cov--locate-coveralls cov--locate-clover cov--locate-pycover)
   "List of paths or functions returning file paths containing coverage files.
 
 Relative paths:
@@ -228,6 +228,18 @@ Looks for a `clover.xml' file. Return nil it not found."
     (when dir
       (cons (file-truename (f-join dir "clover.xml")) 'clover))))
 
+(defun cov--locate-pycover (file-dir file-name)
+  (let ((dir (locate-dominating-file file-dir ".coverage"))
+		candidate)
+	(when dir
+	  (or
+	   (cl-dolist (suffix '(".xml" ".json"))
+		 (setq candidate (f-join dir (concat "coverage" suffix)))
+		 (if (file-exists-p candidate)
+			 (cl-return (cons candidate 'pycover))))
+	   (if (file-exists-p (setq candidate (concat (f-join file-dir file-name) ",cover")))
+		   (cons candidate 'pycover))))))
+
 (defun cov--coverage ()
   "Return coverage file and tool.
 
@@ -312,6 +324,38 @@ of (FILE . (LINE-NUM TIMES-RAN))."
           ;; Clover uses absolute filenames, so we remove the common prefix.
           (push (cons (string-remove-prefix common file-name) file-coverage) matches))))
     matches))
+
+(defun cov--pycover-parse ()
+  (pcase cov-coverage-file
+	((rx "/coverage.xml" line-end)
+	 (let ((xml (if (libxml-available-p)
+						  (libxml-parse-xml-region (point-min) (point-max))
+						(xml-parse-region))))
+	   (cl-loop for class in (dom-by-tag xml 'class)
+				collect (cons (dom-attr class 'filename)
+							  (cl-loop for line in (dom-by-tag class 'line)
+									   collect (list (string-to-number (dom-attr line 'number))
+													 (string-to-number (dom-attr line 'hits))))))))
+	((rx "/coverage.json" line-end)
+	 (let* ((json (if (fboundp 'json-parse-buffer)
+					  (json-parse-buffer)
+					(let ((json-object-type 'hash-table)
+						  (json-array-type 'array)
+						  (json-key-type 'string)
+						  (json-false :false)
+						  (json-null :null))
+					  (json-read))))
+			(files (gethash "files" json)))
+	   (cl-loop for file being the hash-keys of files
+				collect (cons file
+							  (cl-loop for line across (gethash "executed_lines" (gethash file files))
+									   collect (list line 1))))))
+	((rx ",cover" line-end)
+	 (list (cons (substring (file-name-nondirectory cov-coverage-file) 0 -6)
+				 (cl-loop for linum from 1
+						  until (eobp)
+						  if (= ?> (char-after)) collect (list linum 1)
+						  do (forward-line)))))))
 
 (defun cov--read-and-parse (file-path format)
   "Read coverage file FILE-PATH in FORMAT into temp buffer and parse it using `cov--FORMAT-parse'."
