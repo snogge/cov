@@ -727,6 +727,27 @@ even if part of the line is outside any narrrowing."
   "Turn off cov-mode."
   (cov-clear-overlays))
 
+(defun cov-toggle-coverage-mode ()
+  "Toggle `cov-coverage-mode' and run `cov-update'."
+  (interactive)
+  (setq cov-coverage-mode (not cov-coverage-mode))
+  (cov-update))
+
+(defvar cov-mode-map (make-sparse-keymap)
+  "Keymap used with `cov-mode'.")
+
+(easy-menu-define cov-mode-menu cov-mode-map
+  "Menu for `cov-mode'."
+  '("Cov"
+    ["Turn off cov-mode" (cov-mode -1) :help "Disable cov-mode"]
+    ["Help for cov-mode" (describe-function 'cov-mode) :help "Show help for cov-mode"]
+    "---"
+    ["Covered mode" cov-toggle-coverage-mode :style radio :selected cov-coverage-mode
+     :help "Whether to only show whether lines are covered or uncovered."]
+    ["Graded mode" cov-toggle-coverage-mode :style radio :selected (not cov-coverage-mode)
+     :help "Covered lines are decorated with different faces depending on how often it was run."]
+    "---"))
+
 (defun cov-mode-line-lighter ()
   "Return the `cov-mode' mode line lighter string.
 The word `cov' is followed by a suffix for the current `cov-coverage-mode';
