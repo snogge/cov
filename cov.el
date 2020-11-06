@@ -727,10 +727,16 @@ even if part of the line is outside any narrrowing."
   "Turn off cov-mode."
   (cov-clear-overlays))
 
+(defun cov-mode-line-lighter ()
+  "Return the `cov-mode' mode line lighter string.
+The word `cov' is followed by a suffix for the current `cov-coverage-mode';
+`!' for covered/uncovered and `#' for graded mode."
+  (format " cov%s" (if cov-coverage-mode "!" "#")))
+
 ;;;###autoload
 (define-minor-mode cov-mode
   "Minor mode for cov."
-  :lighter " cov"
+  :lighter (:eval (cov-mode-line-lighter))
   (progn
     (if cov-mode
         (cov-turn-on)
