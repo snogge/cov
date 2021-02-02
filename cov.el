@@ -515,11 +515,11 @@ set -- as `face'."
         (overlay-put ol 'face face))
     ol))
 
-(defun cov--get-face (percentage)
-  "Get the appropriate face for the PERCENTAGE coverage.
+(defun cov--get-fringe-face (percentage)
+  "Get the appropriate fringe face for the PERCENTAGE coverage.
 
 Selects the face depending on user preferences and the code's
-execution frequency"
+execution frequency."
   (cond
    ((and cov-coverage-mode (> percentage 0))
     'cov-coverage-run-face)
@@ -535,7 +535,7 @@ execution frequency"
 
 (defun cov--get-fringe (percentage)
   "Return the fringe with the correct face for PERCENTAGE."
-  (propertize "f" 'display `(left-fringe ,cov-fringe-symbol ,(cov--get-face percentage))))
+  (propertize "f" 'display `(left-fringe ,cov-fringe-symbol ,(cov--get-fringe-face percentage))))
 
 (defun cov--help (n percentage)
   "Return help text for the given N count and PERCENTAGE."

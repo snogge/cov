@@ -675,19 +675,19 @@ discarded when the buffer is killed."
   (let ((cov-coverage-mode nil)
         (cov-high-threshold 0.85)
         (cov-med-threshold 0.45))
-    (should (equal (cov--get-face 0.86) 'cov-heavy-face))
-    (should (equal (cov--get-face 0.46) 'cov-med-face))
-    (should (equal (cov--get-face 0.44) 'cov-light-face))
-    (should (equal (cov--get-face 0.0) 'cov-none-face))))
+    (should (equal (cov--get-fringe-face 0.86) 'cov-heavy-face))
+    (should (equal (cov--get-fringe-face 0.46) 'cov-med-face))
+    (should (equal (cov--get-fringe-face 0.44) 'cov-light-face))
+    (should (equal (cov--get-fringe-face 0.0) 'cov-none-face))))
 
 (ert-deftest cov--get-coverage-mode-face-test ()
   (let ((cov-coverage-mode t)
         (cov-high-threshold 0.85)
         (cov-med-threshold 0.45))
-    (should (equal (cov--get-face 0.86) 'cov-coverage-run-face))
-    (should (equal (cov--get-face 0.46) 'cov-coverage-run-face))
-    (should (equal (cov--get-face 0.44) 'cov-coverage-run-face))
-    (should (equal (cov--get-face 0.0) 'cov-coverage-not-run-face))))
+    (should (equal (cov--get-fringe-face 0.86) 'cov-coverage-run-face))
+    (should (equal (cov--get-fringe-face 0.46) 'cov-coverage-run-face))
+    (should (equal (cov--get-fringe-face 0.44) 'cov-coverage-run-face))
+    (should (equal (cov--get-fringe-face 0.0) 'cov-coverage-not-run-face))))
 
 ;; cov--set-overlay
 
