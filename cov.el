@@ -718,14 +718,8 @@ even if part of the line is outside any narrrowing."
   (cov-clear-overlays)
   (cov-set-overlays))
 
-(defun cov-turn-on ()
-  "Turn on cov-mode."
-  (cov-clear-overlays)
-  (cov-set-overlays))
-
-(defun cov-turn-off ()
-  "Turn off cov-mode."
-  (cov-clear-overlays))
+(define-obsolete-function-alias 'cov-turn-on 'cov-update "2021" "Turn on cov-mode.")
+(define-obsolete-function-alias 'cov-turn-off 'cov-clear-overlays "2021" "Turn off cov-mode.")
 
 ;;;###autoload
 (define-minor-mode cov-mode
@@ -733,8 +727,8 @@ even if part of the line is outside any narrrowing."
   :lighter " cov"
   (progn
     (if cov-mode
-        (cov-turn-on)
-      (cov-turn-off))))
+        (cov-update)
+      (cov-clear-overlays))))
 
 (provide 'cov)
 ;;; cov.el ends here
