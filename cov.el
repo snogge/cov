@@ -500,10 +500,10 @@ Project coveragepy is released at <https://github.com/nedbat/coveragepy/>."
     (setq-local cov-coverage-file file-path)
     (funcall (intern (concat "cov--"  (symbol-name format) "-parse")))))
 
-(defun cov--make-overlay (line fringe help)
+(defun cov--make-overlay (line fringe help &optional face)
   "Create an overlay for the LINE.
-
-Uses the FRINGE and sets HELP as `help-echo'."
+Use FRINGE as `before-face', HELP as `help-echo' and FACE -- if
+set -- as `face'."
   (let ((ol (save-excursion
               (goto-char (point-min))
               (forward-line (1- line))
@@ -511,6 +511,8 @@ Uses the FRINGE and sets HELP as `help-echo'."
     (overlay-put ol 'before-string fringe)
     (overlay-put ol 'help-echo help)
     (overlay-put ol 'cov t)
+    (if face
+        (overlay-put ol 'face face))
     ol))
 
 (defun cov--get-face (percentage)
