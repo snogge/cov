@@ -701,10 +701,16 @@ even if part of the line is outside any narrrowing."
   (interactive)
   (remove-overlays (point-min) (point-max) 'cov t))
 
-(defun cov--overlays ()
-  "Return a list of all cov overlays."
-  (seq-filter (lambda (ov) (overlay-get ov 'cov))
-              (overlays-in (point-min) (point-max))))
+(defun cov--overlays (&optional begin end buffer)
+  "Return a list of all cov overlays between BEGIN and END in `widen'ed BUFFER.
+If BEGIN, END, or BUFFER is nil, use `point-min', `point-max' and
+`current-buffer' instead."
+  (with-current-buffer (or buffer (current-buffer))
+    (save-restriction
+      (widen)
+      (seq-filter (lambda (ov) (overlay-get ov 'cov))
+                  (overlays-in (or begin (point-min))
+                               (or end (point-max)))))))
 
 (defun cov-visit-coverage-file ()
   "Visit coverage file."
