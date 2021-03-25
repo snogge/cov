@@ -548,7 +548,10 @@ MAX is the maximum coverage count for any line in the file."
     (cov--make-overlay
      (car line)
      (cov--get-fringe percentage)
-     (cov--help times-executed percentage))))
+     (cov--help times-executed percentage)
+     (when cov-coverage-mode
+       `(:background ,(if (> percentage 0) "pale green" "#ffaaaa")
+                     :extend t)))))
 
 (defsubst cov--file-mtime (file)
   "Return the last modification time of FILE."
