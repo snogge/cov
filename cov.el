@@ -620,9 +620,10 @@ it if necessary, or reloading if the file has changed."
                     (cov-data-coverage stored-data)))))))
 
 (defun cov--load-coverage (coverage file &rest ignore-current)
-  "Load coverage data into COVERAGE from FILE.
-
-Won't update `(current-buffer)' if IGNORE-CURRENT is non-nil."
+  "Load coverage data into `cov-data' struct COVERAGE from FILE.
+Do nothing if coverage is already loaded and up-to-date. Update
+the overlays of all buffers using the same FILE as data source.
+Do not update the current buffer if IGNORE-CURRENT is non-nil."
   ;; File mtime changed or never set, reload.
   (unless (and (equal (cov-data-mtime coverage)
                       (cov--file-mtime file)))
