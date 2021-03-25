@@ -177,6 +177,11 @@ current directory:
   "Call (`message' FORMAT-STRING ARGS) unless `noninteractive' is non-nil."
   (unless noninteractive (apply #'message format-string args)))
 
+(defun cov-reset-data ()
+  "Clear the `cov-coverages' hashtable, forcing a reload of coverage data."
+  (interactive)
+  (setq cov-coverages (make-hash-table :test 'equal)))
+
 (defun cov--locate-coverage-postfix (file-dir file-name path extension)
   "Return full path of coverage file, if found.
 
