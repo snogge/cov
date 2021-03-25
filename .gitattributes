@@ -1,1 +1,3 @@
 *.el	diff=el whitespace=space-before-tab,tab-in-indent,trailing-space
+Makefile	diff=make whitespace=blank-at-eof
+*.sh		whitespace=blank-at-eof,space-before-tab,trailing-space
