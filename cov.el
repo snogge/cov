@@ -598,6 +598,7 @@ Return the list of remaining buffers."
 (defun cov--stored-data (file type)
   "Get the `cov-data' object for FILE from `cov-coverages'.
 If no object exist, create one with TYPE."
+  (cl-assert (file-name-absolute-p file))
   (or (gethash file cov-coverages)
       (puthash file (make-cov-data :coverage-file file :type type) cov-coverages)))
 
