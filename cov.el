@@ -31,6 +31,20 @@
 ;; This mode locates and parses multiple coverage formats and display
 ;; coverage using fringe overlays.
 
+;; The data store:
+;;  (cov--coverage)  -->  (cov-file-path . coverage-tool)
+;;    data is read from the cov-coverage-file variable OR located with
+;;    cov--locate-coverage.
+;;  cov-coverages is a hash table mapping
+;;    cov-data-filename => cov-data structs
+;;  cov-data
+;;    :type ; symbol
+;;    :mtime ; the mtime from when the file was last read
+;;    :buffers ; buffers visiting(?) files this struct has data for
+;;    :watcher ; file notification watcher for the coverage file
+;;    :coverage ; coverage data
+;;      ((FILE . ((LINE-NUM TIMES-RAN) ...)) ...)
+
 ;;; Code:
 
 (require 'f)
