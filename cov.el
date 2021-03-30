@@ -209,15 +209,16 @@ Look in FILE-DIR for coverage for FILE-NAME in PATH."
                (and file (cons file tool))))
            cov-coverage-alist))
 
-(defun cov--locate-coverage (file-path)
-  "Locate coverage file of given source file FILE-PATH.
+(defun cov--locate-coverage (buffer)
+  "Locate coverage file of the file visited by BUFFER.
 
 The function iterates over `cov-coverage-file-path' for path
 candidates or locate functions. The first found file will be
 returned as a cons cell of the form (COV-FILE-PATH .
 COVERAGE-TOOL). If no file is found return nil. COV-FILE-PATH
 should always be absolute."
-  (let* ((file-dir (f-dirname file-path))
+  (let* ((file-path (buffer-file-name buffer))
+         (file-dir (f-dirname file-path))
          (file-name (f-filename file-path))
          (cov-data (cl-some (lambda (path-or-fun)
                               (if (stringp path-or-fun)
