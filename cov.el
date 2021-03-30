@@ -295,8 +295,8 @@ Looks for a `clover.xml' file. Return nil it not found."
     (when dir
       (cons (file-truename (f-join dir "coverage.json")) 'coveragepy))))
 
-(defun cov--coverage ()
-  "Return coverage file and tool for the file visited by the current buffer.
+(defun cov--coverage (&optional buffer)
+  "Return coverage file and tool for file visited in BUFFER.
 
 Return a cons cell of the form (COVDATA-FILE-PATH . COVERAGE-TOOL) or
 nil if no coverage data is found.
@@ -304,8 +304,8 @@ Find coverage data using `cov--locate-coverage' and cache the
 results in the buffer local variable `cov-coverage-file'."
   (or cov-coverage-file
       ;; In case we're enabled in a buffer without a file.
-      (when (buffer-file-name)
-        (setq cov-coverage-file (cov--locate-coverage (buffer-file-name))))))
+      (when (buffer-file-name buffer)
+        (setq cov-coverage-file (cov--locate-coverage buffer)))))
 
 (defun cov--gcov-parse (&optional buffer)
   "Parse gcov coverage from gcov file in BUFFER.
