@@ -464,7 +464,7 @@ discarded when the buffer is killed."
       (cov--with-test-buffer "gcov/same-dir/test"
         ;; load data for the first time
         (should (setq stored-data (cov--get-buffer-coverage)))
-        (should (eq stored-data (cov--get-buffer-coverage)))))))
+        (should (equal stored-data (cov--get-buffer-coverage)))))))
 
 (ert-deftest cov--get-buffer-coverage-test-split-dir-relative ()
   "Verify that `cov--get-buffer-coverage' stores and reuses data in  `cov-coverages'."
@@ -675,19 +675,19 @@ discarded when the buffer is killed."
   (let ((cov-coverage-mode nil)
         (cov-high-threshold 0.85)
         (cov-med-threshold 0.45))
-    (should (equal (cov--get-face 0.86) 'cov-heavy-face))
-    (should (equal (cov--get-face 0.46) 'cov-med-face))
-    (should (equal (cov--get-face 0.44) 'cov-light-face))
-    (should (equal (cov--get-face 0.0) 'cov-none-face))))
+    (should (equal (cov--get-fringe-face 0.86) 'cov-heavy-face))
+    (should (equal (cov--get-fringe-face 0.46) 'cov-med-face))
+    (should (equal (cov--get-fringe-face 0.44) 'cov-light-face))
+    (should (equal (cov--get-fringe-face 0.0) 'cov-none-face))))
 
 (ert-deftest cov--get-coverage-mode-face-test ()
   (let ((cov-coverage-mode t)
         (cov-high-threshold 0.85)
         (cov-med-threshold 0.45))
-    (should (equal (cov--get-face 0.86) 'cov-coverage-run-face))
-    (should (equal (cov--get-face 0.46) 'cov-coverage-run-face))
-    (should (equal (cov--get-face 0.44) 'cov-coverage-run-face))
-    (should (equal (cov--get-face 0.0) 'cov-coverage-not-run-face))))
+    (should (equal (cov--get-fringe-face 0.86) 'cov-coverage-run-face))
+    (should (equal (cov--get-fringe-face 0.46) 'cov-coverage-run-face))
+    (should (equal (cov--get-fringe-face 0.44) 'cov-coverage-run-face))
+    (should (equal (cov--get-fringe-face 0.0) 'cov-coverage-not-run-face))))
 
 ;; cov--set-overlay
 
