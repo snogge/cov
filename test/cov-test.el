@@ -134,6 +134,14 @@ or a symbol to be resolved at runtime."
              actual
              nil))))
 
+(ert-deftest cov--locate-coverage-postfix--split-dir ()
+  "Verify that `cov--locate-coverage-postfix' finds file in a differnt tree."
+  (let* ((basepath (format "%s/gcov/split-dir" test-path))
+         (srcpath (format "%s/src" basepath))
+         (actual (cov--locate-coverage-postfix srcpath "test" "../bld" ".gcov"))
+         (expected (file-truename (format "%s/bld/test.gcov" basepath))))
+    (should (equal actual expected))))
+
 ;; cov--locate-coverage-path
 (ert-deftest cov--locate-coverage-path-test ()
   "Verify that `cov--locate-coverage-path' finds a file in the same dir."
@@ -165,6 +173,14 @@ or a symbol to be resolved at runtime."
              actual
              nil))))
 
+(ert-deftest cov--locate-coverage-path--split-dir ()
+  "Verify `cov--locate-coverage-path' for split directories."
+  (let* ((path (format "%s/gcov/split-dir" test-path))
+         (cov-coverage-alist '((".gcov" . gcov)))
+         (actual (cov--locate-coverage-path (format "%s/src" path) "test" "../bld"))
+         (expected (cons (file-truename (format "%s/bld/test.gcov" path)) 'gcov)))
+    (should (equal actual expected))))
+
 ;; cov--locate-coverage
 (ert-deftest cov--locate-coverage-test ()
   "Verify that `cov--locate-coverage' finds a gcov file in the same dir."
@@ -184,6 +200,26 @@ or a symbol to be resolved at runtime."
     (should (equal
              actual
              nil))))
+
+(ert-deftest cov--locate-coverage-split-dir-test ()
+  (let* ((path (format "%s/gcov/split-dir" test-path))
+         (cov-coverage-alist '((".gcov" . gcov)))
+         (cov-coverage-file-paths '("." "../bld"))
+         (actual (cov--locate-coverage (format "%s/src/test" path)))
+         (expected (cons (file-truename (format "%s/bld/test.gcov" path)) 'gcov)))
+    (should (equal actual expected))))
+
+;; cov--coverage
+(ert-deftest cov--coverage-test ()
+  "Verify that `cov--coverage' sets the local variable `cov-coverage-file'."
+  :tags '(cov--coverage)
+  (cov--with-test-buffer "gcov/same-dir/test"
+    (should (not (assq 'cov-coverage-file (buffer-local-variables))))
+    (let ((expected (cons (format "%s.gcov" (buffer-file-name)) 'gcov))
+          (returned (cov--coverage)))
+      (should (equal expected returned))
+      (should (assq 'cov-coverage-file (buffer-local-variables)))
+      (should (eq returned cov-coverage-file)))))
 
 ;; cov-data--remove-buffer
 (ert-deftest cov-data--remove-buffer-test ()
@@ -325,6 +361,39 @@ or a symbol to be resolved at runtime."
         ;; load data for the first time
         (should (setq stored-data (cov--get-buffer-coverage)))
         (should (eq stored-data (cov--get-buffer-coverage)))))))
+
+(ert-deftest cov--get-buffer-coverage-test-split-dir-relative ()
+  :tags '(cov--get-buffer-coverage)
+  :expected-result :failed
+  (let ((cov-coverages (make-hash-table :test 'equal))
+        kill-buffer-hook
+        (cov-coverage-file-paths '("." "../bld"))
+        stored-data)
+    (mocker-let ((file-notify-add-watch (file flags callback)
+                                        ((:input-matcher
+                                          (lambda (file flags callback)
+                                            (and
+                                             (string= (format "%s/gcov/split-dir/bld" test-path) file)
+                                             (equal flags '(change))
+                                             (functionp callback)))
+                                          ;; dummy watch descriptor
+                                          :output 'watch-descriptor
+                                          ;; Will not be called if file-notify is not supported
+                                          ;; by Emacs.
+                                          :occur (if file-notify--library 1 0)
+                                          ))))
+      (cov--with-test-buffer "gcov/split-dir/src/test"
+        ;; These should sexps check the progress of cov--get-buffer-coverage
+        (should (cov--coverage)) ;; coverage data is found
+        (setq stored-data (cov--get-buffer-coverage)) ;; call the actual function
+         ;; verfiy that a hash-table entry has been created.
+        (should (= (hash-table-count cov-coverages) 1))
+        ;; Check that the kill hook has been added
+        (should (memq 'cov-kill-buffer-hook kill-buffer-hook))
+        (ert-info ((pp-to-string (hash-table-keys cov-coverages)))
+          (ert-info ((pp-to-string (hash-table-values cov-coverages)))
+            (should stored-data)
+            (should (eq stored-data (cov--get-buffer-coverage)))))))))
 
 ;; cov--load-coverage
 (ert-deftest cov--load-coverage-test-mtime-check ()
