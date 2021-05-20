@@ -364,7 +364,6 @@ or a symbol to be resolved at runtime."
 
 (ert-deftest cov--get-buffer-coverage-test-split-dir-relative ()
   :tags '(cov--get-buffer-coverage)
-  :expected-result :failed
   (let ((cov-coverages (make-hash-table :test 'equal))
         kill-buffer-hook
         (cov-coverage-file-paths '("." "../bld"))

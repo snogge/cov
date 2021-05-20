@@ -263,6 +263,24 @@ Read from `current-buffer' if BUFFER is nil. Return a list
 		  ;; Derive the name of the covered file from the filename of
 		  ;; the coverage file.
 		  (filename (file-name-sans-extension (f-filename cov-coverage-file))))
+      ;; Replace the filename with the one from the file preamble
+      ;; `Source' tag or `file' line in the intermediate format.
+      ;; TODO: The intermediate format actually support multiple
+      ;; source files, the parser should be extended to manage that.
+      (save-excursion
+        (save-match-data
+          (save-restriction
+            (widen)
+            ;; Temporarily widen the buffer to read the file tag.
+            ;; TODO: Might not work correctly for a intermediate file
+            ;; with multiple source file entries.
+            (goto-char (point-min))
+            ;; Do not search further than 1000 characters. The Source
+            ;; tag is typically the first line and the file entry
+            ;; typically the second.  TODO: Parse the entire header.
+            ;; The Source header always hold a ralative path.
+            (when (re-search-forward (rx (or ":Source:" "file:") (group (1+ any))) 1000 t)
+              (setq filename (match-string 1))))))
 	  (save-excursion
 		(save-match-data
 		  (goto-char (point-min))
@@ -475,10 +493,18 @@ it if necessary, or reloading if the file has changed."
         (cov--load-coverage stored-data file t)
 
         (add-hook 'kill-buffer-hook 'cov-kill-buffer-hook nil t)
-        ;; Find file coverage.
-        (let ((common (f-common-parent (list file (buffer-file-name)))))
-          (cdr (assoc (string-remove-prefix common (buffer-file-name))
-                      (cov-data-coverage stored-data))))))))
+        ;; Find file coverage in the (SRCFILE . COVDATA) alist.
+        (let ((relpath (file-relative-name (buffer-file-name)
+                                           (file-name-directory file)))
+              (common (f-common-parent (list file (buffer-file-name)))))
+          (or
+           ;; Relative path is probably the most common
+           (cdr (assoc relpath (cov-data-coverage stored-data)))
+           (cdr (assoc (string-remove-prefix common (buffer-file-name))
+                       (cov-data-coverage stored-data)))
+           ;; Check for absolute path as well TODO: Add tests
+           (cdr (assoc (buffer-file-name) (cov-data-coverage stored-data)))
+           ))))))
 
 (defun cov--load-coverage (coverage file &rest ignore-current)
   "Load coverage data into COVERAGE from FILE.
