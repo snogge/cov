@@ -130,7 +130,8 @@ See `cov-coverage-mode'"
   :tag "Cov coverage mode not-run face"
   :group 'cov-faces)
 
-(defvar cov-coverage-alist '((".gcov" . gcov))
+(defvar cov-coverage-alist '((".gcov" . gcov)
+                             (".info" . lcov))
   "Alist of coverage tool and file postfix.
 
 Each element looks like (FILE-POSTIX . COVERAGE-TOOL).  If a file
@@ -141,7 +142,7 @@ COVERAGE-TOOL has created the data.
 Currently the only supported COVERAGE-TOOL is gcov.")
 
 (defvar cov-coverage-file-paths
-  '("." cov--locate-coveralls cov--locate-clover cov--locate-coveragepy)
+  '("." cov--locate-coveralls cov--locate-clover cov--locate-coveragepy cov--locate-lcov)
   "List of paths or functions returning file paths containing coverage files.
 
 Relative paths:
@@ -209,6 +210,40 @@ COVERAGE-TOOL). If no file is found nil is returned."
                    (cov--locate-coverage-path file-dir file-name path-or-fun)
                  (funcall path-or-fun file-dir file-name)))
              cov-coverage-file-paths)))
+
+(defvar cov-lcov-patterns '("*.info")
+  "List of wildcard patterns or functions for finding a relevant lcov info file.
+Each element can be a file name with wildcards or a function.
+Functions should take two arguments; FILE-DIR and FILE-NAME where
+FILE-DIR is the folder of the source file and FILE-NAME is the
+source file without directory. Functions should return the file
+name of a single existing info file.
+
+Patterns are checked in order and the return value of the first
+matching pattern is returned. If a wildcard pattern matches more
+thean one file, the first value will be returned.")
+
+(defvar-local cov-lcov-file-name nil
+  "The file name of the lcov tracefile, typically using the extension `.info'.
+There is no standard basename for lcov tracefiles. Set
+`cov-lcov-filename' locally for the project.")
+
+(defun cov--check-pattern (pattern file-dir file-name)
+  "Check if a PATTERN match a coverage file from FILE-DIR for FILE-NAME."
+  (if (functionp pattern)
+      (funcall pattern file-dir file-name)
+    (let ((default-directory file-dir))
+      (car (file-expand-wildcards pattern t)))))
+
+(defun cov--locate-lcov (file-dir file-name)
+  "Locate a lcov `.info' file from FILE-DIR for FILE-NAME."
+  (let (lcov-file)
+    (if (and cov-lcov-file-name (file-exists-p cov-lcov-file-name))
+        (setq lcov-file cov-lcov-file-name)
+      (setq lcov-file (seq-some (lambda (ptrn)
+                                  (cov--check-pattern ptrn file-dir file-name))
+                                cov-lcov-patterns)))
+    (when lcov-file (cons lcov-file 'lcov))))
 
 (defun cov--locate-coveralls (file-dir _file-name)
   "Locate coveralls coverage from FILE-DIR for FILE-NAME.
