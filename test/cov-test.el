@@ -4,6 +4,9 @@
 (require 'mocker)
 (require 'type-break) ; for timep
 
+;; forward declarations
+(defvar test-path)
+
 (defmacro cov--with-test-buffer (testfile &rest body)
   "Open TESTFILE in a buffer, execute BODY in it, and kill the buffer.
 TESTFILE can be an absolute path, a path relative to `test-path',
@@ -76,6 +79,18 @@ or a symbol to be resolved at runtime."
     (should (equal
              (cov--gcov-parse)
              '(("test" (24 0)))))))
+
+;; cov--lcov-parse
+(ert-deftest cov--lcov-parse-test ()
+  (cov--with-test-buffer "lcov/lcov.info"
+    (let ((data (cov--lcov-parse)))
+      (should (= (length data) 3))  ; 2 c-files and 1 system header
+      (let ((main (assoc "/test/lcov/main.c" data))
+            (extra (assoc "/test/lcov/extra.c" data)))
+        (should main)
+        (should (equal (cdr main) '((5 1) (7 1) (8 1) (9 0))))
+        (should extra)
+        (should (equal (cdr extra) '((3 1) (5 5) (6 24) (7 140) (8 120) (9 1))))))))
 
 ;; cov--coveralls-parse
 (ert-deftest cov--coveralls-parse--basic-test ()

@@ -290,6 +290,52 @@ Read from `current-buffer' if BUFFER is nil. Return a list
 					   collect (list (string-to-number (match-string 1))
 									 (string-to-number (match-string 2)))))))))))
 
+(defconst cov--lcov-prefix-re
+  (rx line-start
+      (or (seq (group-n 1 (or "TN" "SF" "FN" "FNDA" "FNF" "FNH" "BRDA"
+                              "BRF" "BRH" "DA" "LF" "LH"))
+               ":")
+          (group-n 1 "end_of_record")))
+  "Regex for matching the line prefixes of lcov coverage data.")
+
+
+(defun cov--lcov-parse (&optional buffer)
+  "Parse lcov trace file in BUFFER.
+Read from `current-buffer' if BUFFER is nil.
+Return a list `((FILE . ((LINE-NUM EXEC-COUNT) ...)) ...)'."
+  (let (data file lines prefix)
+    (with-current-buffer (or buffer (current-buffer))
+      (save-excursion
+        (save-match-data
+          (save-restriction
+            (widen)
+            (goto-char (point-min))
+            (while (not (eobp))
+              (unless (looking-at cov--lcov-prefix-re)
+                (error "Unable to parse lcov data from %s: %s"
+                       (or (buffer-file-name) (buffer-name))
+                       (buffer-substring (line-beginning-position) (line-end-position))))
+              (goto-char (match-end 0))
+              (pcase (setq prefix (match-string 1))
+                ;; SF always hold an absolute path
+                ("SF" (progn (when file
+                               (push (cons file (nreverse lines)) data))
+                             (setq file (buffer-substring (point) (line-end-position))
+                                   lines nil)))
+                ("DA" (if (looking-at (rx (group (1+ digit)) ?,
+                                          (group (1+ digit))
+                                          (optional ?, (group (* any)))))
+                          (push (list (string-to-number (match-string 1))
+                                      (string-to-number (match-string 2)))
+                                lines)
+                        (error "Failed to parse lcov DA line")))
+                ("end_of_record" (progn (push (cons file (nreverse lines)) data)
+                                        (setq file nil lines nil)))
+                ((or "TN" "FN" "FNDA" "FNF" "FNH" "BRDA" "BRF" "BRH" "LF" "LH") (ignore prefix))
+                )
+              (forward-line 1))))))
+    (nreverse data)))
+
 (defun cov--coveralls-parse ()
   "Parse coveralls coverage.
 
