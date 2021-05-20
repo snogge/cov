@@ -306,6 +306,28 @@ or a symbol to be resolved at runtime."
                (cov--load-coverage (datastore file &optional ignore-current)))
     (should-not (cov--get-buffer-coverage))))
 
+(defmacro cov--mock-file-nofify-add-watch (watched-file)
+  "Defines a mock for `file-notify-add-watch'.
+Use like
+
+ \(mocker-let ((cov--mock-file-nofify-add-watch WATCHED-FILE)
+               ...))
+
+where WATCHED-FILE is the expected value for the FILE argument to
+`file-notify-add-watch'."
+  `(file-notify-add-watch (file flags callback)
+                           ((:input-matcher
+                             (lambda (file flags callback)
+                               (and
+                                (string= ,watched-file file)
+                                (equal flags '(change))
+                                (functionp callback)))
+                            ;; dummy watch descriptor
+                            :output 'watch-descriptor
+                            ;; Will not be called if file-notify is
+                            ;; not supported by Emacs.
+                            :occur (if file-notify--library 1 0)))))
+
 (ert-deftest cov--get-buffer-coverage-no-stored-data-test ()
   "No stored coverage data found."
   :tags '(cov--get-buffer-coverage)
