@@ -589,7 +589,7 @@ it if necessary, or reloading if the file has changed."
            (cdr (assoc (string-remove-prefix common (buffer-file-name))
                        (cov-data-coverage stored-data)))
            ;; Check for absolute path as well TODO: Add tests
-           (cdr (assoc (buffer-file-name) (cov-data-coverage stored-data)))
+           (cdr (assoc (file-local-name (buffer-file-name)) (cov-data-coverage stored-data)))
            ))))))
 
 (defun cov--load-coverage (coverage file &rest ignore-current)
