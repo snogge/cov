@@ -614,6 +614,8 @@ it if necessary, or reloading if the file has changed."
                    (cov-watch-callback file event)))))
         ;; Load coverage from file if needed.
         (cov--load-coverage stored-data file t)
+        ;; TODO: If we have no coverage at this point, we should unregister
+        ;; file and not register a kill hook.
 
         (add-hook 'kill-buffer-hook 'cov-kill-buffer-hook nil t)
         ;; Find file coverage.
