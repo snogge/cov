@@ -592,7 +592,8 @@ If no object exist, create one with TYPE."
 Finds the coverage data for the file in `cov-coverages', loading
 it if necessary, or reloading if the file has changed."
   (let ((cov (cov--coverage)))
-    (when cov
+    (if (not cov)
+        (ignore (cov--message "No coverage data found"))
       (let* ((file (car cov))
              ;; If file is already registered in cov--coverages fetch
              ;; the data, otherwise register the file with no data.
