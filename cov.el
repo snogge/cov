@@ -626,6 +626,7 @@ it if necessary, or reloading if the file has changed."
   "Load coverage data into COVERAGE from FILE.
 
 Won't update `(current-buffer)' if IGNORE-CURRENT is non-nil."
+  (cl-assert (cov-data-p coverage))
   ;; File mtime changed or never set, reload.
   (unless (and (equal (cov-data-mtime coverage)
                       (cov--file-mtime file)))
