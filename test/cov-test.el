@@ -73,6 +73,18 @@ discarded when the buffer is killed."
              (cov--gcov-parse)
              `((,(file-truename (concat default-directory "test")) (99999 999999999)))))))
 
+(defun equal-coverage (c1 c2)
+  "Compare two coverage lists for equivalence.
+Valuse should be lists
+((filename (num num) (num num) ...)
+ (filename (num num) (num num) ...)
+ ...)
+where order between filename lists does not matter and order between (num num) does not matter."
+  (cl-labels (filecmp (f1 f2)
+                      (and (string= (car f1) (car f2))
+                        1)))
+  )
+
 (ert-deftest cov--gcov-parse--multiline-test ()
   (with-temp-buffer
     (insert "        -:    0:Source:test\n"
