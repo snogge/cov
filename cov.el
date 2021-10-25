@@ -401,29 +401,32 @@ Return a list `((FILE . ((LINE-NUM EXEC-COUNT) ...)) ...)'."
                                     using (hash-values count)
                                     collect (list lineno count))))))
 
+(defun cov--read-json ()
+  "Read JSON data from point in the current buffer.
+Use `json-parse-buffer (c-implementation) if available, otherwise
+`read-json'."
+  (if (fboundp 'json-parse-buffer)
+      (json-parse-buffer)
+    (let ((json-object-type 'hash-table)
+          (json-array-type 'array)
+          (json-key-type 'string)
+          (json-false :false)
+          (json-null :null))
+      (json-read))))
+
 (defun cov--coveralls-parse ()
   "Parse coveralls coverage.
 
 Parse coveralls data in `(current-buffer)' and return a list
 of (FILE . (LINE-NUM TIMES-RAN))."
-  (let*
-      ((json-object-type 'hash-table)
-       (json-array-type 'list)
-       (coverage (json-read))
-       (matches (list)))
-    (dolist (source-file (gethash "source_files" coverage))
-      (let ((file-coverage (list))
-            (linenum 1)
-            (name (gethash "name" source-file)))
-        (unless (file-name-absolute-p name)
-          (setq name (expand-file-name name
-                                       (file-name-directory cov-coverage-file))))
-        (dolist (count (gethash "coverage" source-file))
-          (when count
-            (push (list linenum count) file-coverage))
-          (setq linenum (+ linenum 1)))
-        (push (cons (file-truename name) file-coverage) matches)))
-    matches))
+  (let ((coverage (cov--read-json)))
+    (cl-loop for source across (gethash "source_files" coverage)
+             collect (cons (file-truename
+                            (expand-file-name (gethash "name" source)
+                                              (file-name-directory cov-coverage-file)))
+                           (cl-loop for linenum from 1
+                                    for count across (gethash "coverage" source)
+                                    if (numberp count) collect (list linenum count))))))
 
 (defun cov--clover-parse ()
   "Parse clover coverage.
