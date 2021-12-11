@@ -69,18 +69,23 @@ will be painted with `cov-med-face'."
   :group 'cov
   :type 'float)
 
-(defcustom cov-coverage-mode nil
-  "Whether to only show whether lines are covered or uncovered.
+(defcustom cov-coverage-mode 'profiling
+  "Specify one of two modes to display coverage data.
 
-If t, covered lines are decorated with `cov-coverage-run-face',
-and uncovered lines are decorated with `cov-coverage-not-run-face'.
+The default - `profiling' - decorares lines with `cov-light-face',
+`cov-med-face', or `cov-heavy-face' depending on how often it was
+executed.
 
-If nil, covered lines are decorated with `cov-light-face',
-`cov-med-face', or `cov-heavy-face', depending on how often it
-was run."
+The other option is `coverage' which decorates covered lines with
+`cov-coverage-run-face', and uncovered lines with
+`cov-coverage-not-run-face'.
+
+Note that `cov-update' has to be called to update existing
+`cov-mode' decorations."
   :tag "Cov coverage mode"
   :group 'cov
-  :type 'boolean)
+  :type '(radio (const :tag "Profiling" profiling)
+                (const :tag "Coverage" coverage)))
 
 (defcustom cov-fringe-symbol 'empty-line
   "The symbol to display on each line while in coverage-mode.
@@ -516,20 +521,19 @@ Uses the FRINGE and sets HELP as `help-echo'."
 (defun cov--get-face (percentage)
   "Get the appropriate face for the PERCENTAGE coverage.
 
-Selects the face depending on user preferences and the code's
-execution frequency"
-  (cond
-   ((and cov-coverage-mode (> percentage 0))
-    'cov-coverage-run-face)
-   ((and cov-coverage-mode (= percentage 0))
-    'cov-coverage-not-run-face)
-   ((< cov-high-threshold percentage)
-    'cov-heavy-face)
-   ((< cov-med-threshold percentage)
-    'cov-med-face)
-   ((> percentage 0)
-    'cov-light-face)
-   (t 'cov-none-face)))
+Selects the face depending on the variable `cov-coverage-mode'
+and the code's execution frequency."
+  (cl-ecase cov-coverage-mode
+    ((profiling nil)
+     (pcase percentage
+       ((pred (< cov-high-threshold)) 'cov-heavy-face)
+       ((pred (< cov-med-threshold)) 'cov-med-face)
+       ((pred (< 0)) 'cov-light-face)
+       (_ 'cov-none-face)))
+    ((coverage t)
+     (if (> percentage 0)
+         'cov-coverage-run-face
+       'cov-coverage-not-run-face))))
 
 (defun cov--get-fringe (percentage)
   "Return the fringe with the correct face for PERCENTAGE."
