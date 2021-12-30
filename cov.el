@@ -141,7 +141,8 @@ COVERAGE-TOOL has created the data.
 Currently the only supported COVERAGE-TOOL is gcov.")
 
 (defvar cov-coverage-file-paths
-  '("." cov--locate-lcov cov--locate-coveralls cov--locate-clover cov--locate-coveragepy)
+  '("." cov--locate-lcov cov--locate-coveralls cov--locate-clover
+    cov--locate-cobertura cov--locate-coveragepy)
   "List of paths or functions returning file paths containing coverage files.
 
 Relative paths:
@@ -273,6 +274,19 @@ Looks for a `clover.xml' file. Return nil it not found."
   (let ((dir (locate-dominating-file file-dir "clover.xml")))
     (when dir
       (cons (file-truename (f-join dir "clover.xml")) 'clover))))
+
+(defun cov--locate-cobertura (file-dir _file-name)
+  "Locate clover coverage from FILE-DIR for FILE-NAME.
+Looks for a `cobertura.xml' or `cov.xml' file. Return nil it not found."
+  (let* ((found-name "cobertura.xml")
+         (dir (locate-dominating-file file-dir
+                                     (lambda (directory)
+                                       (let ((default-directory directory))
+                                         (or (file-exists-p "cobertura.xml")
+                                             (and (file-exists-p "cov.xml")
+                                                  (setq found-name "cov.xml"))))))))
+    (when dir
+      (cons (file-truename (f-join dir found-name)) 'cobertura))))
 
 (defun cov--locate-coveragepy (file-dir _file-name)
   "Locate file \"coverage.json\" starting at FILE-DIR."
@@ -451,6 +465,26 @@ of (FILE . (LINE-NUM TIMES-RAN))."
                   (line-count (string-to-number (elquery-prop line "count"))))
               (unless (equal line-num 0)
                 (push (list line-num line-count) file-coverage))))
+          (push (cons (file-truename file-name) file-coverage) matches))))
+    matches))
+
+(defun cov--cobertura-parse ()
+  "Parse cobertura coverage."
+  (let ((xml (elquery-read-string (buffer-string)))
+        matches source-dir)
+    (when xml
+      (setq source-dir (elquery-text (car (elquery-$ "coverage sources source" xml))))
+      (dolist (class (elquery-$ "coverage packages package classes class" xml))
+        (let ((file-name (elquery-prop class "filename"))
+              file-coverage)
+          (unless (file-name-absolute-p file-name)
+            (setq file-name
+                  (expand-file-name file-name source-dir)))
+          (dolist (line (elquery-$ "lines line" class))
+            (push (list
+                   (string-to-number (elquery-prop line "number"))
+                   (string-to-number (elquery-prop line "hits")))
+                  file-coverage))
           (push (cons (file-truename file-name) file-coverage) matches))))
     matches))
 
